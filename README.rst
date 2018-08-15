@@ -35,7 +35,7 @@ Getting Started:
     redis = Redis()
     
     config = {
-        
+        "secret": APP_SECRET
     }
 
     app = falcon.API(
