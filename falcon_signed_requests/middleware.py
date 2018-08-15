@@ -70,6 +70,7 @@ class AuthenticRequestMiddleware(object):
     * expiry: the number of seconds a request is valid for (defaults to 300s, or 5min)
     * digest: the digest method to use ("base64" or "hex", defaults to "base64")
     * hash:   the hashing algorithm to use ("sha256" or "sha1", defaults to "sha256")
+    * signature_prefix: a prefix to add in front of the signature value (defaults to empty string "")
     * nonce_prefix: the prefix to use for nonce key names in redis (defaults to "nonce")
     * is_uuid_required: Whether the X-{header}-UUID is included in the check (defaults to True)
 
@@ -85,6 +86,7 @@ class AuthenticRequestMiddleware(object):
         self.is_uuid_required = config.get("is_uuid_required", True)
         self.is_debug = config.get("debug_bypass", False)
         self.header_name = config.get("header", "auth")
+        self.sig_prefix = config.get("signature_prefix", "")
 
     def _get_redis_key(self, request_id):
         return ".".join([self.config.get("nonce_prefix", "nonce"), request_id])
@@ -146,7 +148,7 @@ class AuthenticRequestMiddleware(object):
         # Constant-time comparison (to avoid timing attacks)
         # of the generated and the provided signatures
         # If these match, the request is authentic
-        return hmac.compare_digest(generated_signature, signature)
+        return hmac.compare_digest(self.sig_prefix + generated_signature, signature)
 
     def process_resource(self, req, resp, resource, params):
         # retrieve the header info required
