@@ -118,7 +118,7 @@ The config dictionary expects the fields:
 * hash:   the hashing algorithm to use ("sha256" or "sha1", defaults to "sha256")
 * signature_prefix: a prefix to add in front of the signature value (defaults to empty string "")
 * nonce_prefix: the prefix to use for nonce key names in redis (defaults to "nonce")
-* is_uuid_required: Whether the X-{header}-UUID is included in the check (defaults to True)
+* is_uuid_required: Whether the X-{name}-UUID is included in the check (defaults to True)
 
 e.g. To create a configuration which authenticates `Github Webhooks <https://developer.github.com/webhooks/securing/>`__:
 
