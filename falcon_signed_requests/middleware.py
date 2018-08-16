@@ -120,6 +120,8 @@ class AuthenticRequestMiddleware(object):
 
     def _has_valid_signature(self, body, request_id, signature):
         if self.is_uuid_required:
+            if request_id is None:
+                raise ValueError("Request ID is required")
             # Combine the request id and the (byte) contents of the request body
             # request_id is encoded to utf-8 as the payload is represented as bytes
             payload = request_id.encode("utf-8") + body
@@ -141,7 +143,9 @@ class AuthenticRequestMiddleware(object):
         }
 
         if self.digest == "base64":
-            generated_signature = base64.b64encode(hmac.new(**hmac_fields).digest())
+            generated_signature = base64.b64encode(
+                hmac.new(**hmac_fields).digest()
+            ).decode('utf-8')
         else:
             generated_signature = hmac.new(**hmac_fields).hexdigest()
 
@@ -155,7 +159,8 @@ class AuthenticRequestMiddleware(object):
         signature = req.get_header("x-{}-signature".format(self.header_name))
         request_id = req.get_header("x-{}-uuid".format(self.header_name))
 
-        if req.method != "POST" and signature is not None:
+        if req.method != "POST" or signature is None:
+            req.is_authentic = False
             return  # Only required to process POST requests
 
         # Request is not authenticated until proven so
@@ -167,7 +172,12 @@ class AuthenticRequestMiddleware(object):
 
         # Check to see if the request id and request body are authentic
         # (have not been tampered with, and the signature matches)
-        has_matching_signature = self._has_valid_signature(body, request_id, signature)
+        try:
+            has_matching_signature = self._has_valid_signature(body, request_id, signature)
+        except ValueError:
+            raise falcon.HTTPForbidden(
+                description="Invalid credentials for accessing this restricted resource"
+            )
 
         if has_matching_signature:
             if self.is_uuid_required:
@@ -200,11 +210,15 @@ class AuthenticRequestMiddleware(object):
             )
 
             try:
-                req._media = handler.deserialize(
-                    BytesIO(body), req.content_type, req.content_length
-                )
+                req._media = handler.deserialize(body)
             except Exception:
-                pass
+                try:
+                    # new version uses different args
+                    req._media = handler.deserialize(
+                        BytesIO(body), req.content_type, req.content_length
+                    )
+                except Exception:
+                    pass
         else:
             raise falcon.HTTPForbidden(
                 description="Access to this resource has been restricted"

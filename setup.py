@@ -37,7 +37,7 @@ setup(
     author='David Collien',
     author_email='david@openlearning.com',
     description='falcon-signed-requests',
-    download_url='',
+    download_url='https://github.com/OpenLearningNet/falcon-signed-request-middleware/tarball/master',
     setup_requires=['pytest-runner'],
     install_requires=[
         'falcon',

@@ -2,3 +2,8 @@
 **.egg-info
 .vscode
 venv
+.pypirc
+.pytest_cache
+build
+dist
+__pycache__
